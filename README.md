@@ -5,7 +5,8 @@ A comprehensive multi-perspective code review skill for Claude that analyzes cod
 ## Features
 
 - **Multi-Perspective Analysis**: Analyzes code from 7 specialized perspectives (Security, Performance, Architecture, QA, Maintainability, Product)
-- **OWASP Top 10 Coverage**: Complete coverage of OWASP Top 10 2021 vulnerabilities
+- **OWASP Top 10 Coverage**: Complete coverage of OWASP Top 10 2021 vulnerabilities with CWE mappings
+- **Comprehensive CWE Checks**: 50+ specific vulnerability patterns including memory safety, injection variants, and modern attack vectors
 - **Memory Leak Detection**: Comprehensive analysis of resource leaks, unbounded collections, and cleanup patterns
 - **Issue-Based Format**: Numbered issues with severity, location, code examples, and recommendations
 - **Actionable Feedback**: Concrete code examples showing both problems and solutions
@@ -57,13 +58,16 @@ claude "Review the authentication system" src/auth/*.ts
 ## Review Coverage
 
 ### 🛡️ Security Engineer
-- Full OWASP Top 10 2021 coverage
-- Injection attacks (SQL, XSS, command injection)
+- Full OWASP Top 10 2021 coverage with CWE mappings
+- Injection attacks (SQL, NoSQL, XSS, command, LDAP, template injection)
 - Broken access control and authentication
 - Cryptographic failures and secret management
 - Security misconfiguration
-- Vulnerable dependencies
+- Vulnerable dependencies and supply chain
 - SSRF, XXE, and advanced attack vectors
+- Race conditions, timing attacks, prototype pollution
+- JWT algorithm confusion, GraphQL attacks
+- Memory safety issues (buffer overflow, use-after-free)
 
 ### ⚡ Performance Engineer
 - Memory leaks (unbounded collections, event listeners, file handles)
@@ -167,7 +171,7 @@ claude --skill code-review-llm-council "Review this" test-cases/auth.py
 
 Based on evaluation tests:
 - **Pass rate**: 100% (vs 81% baseline)
-- **Comprehensive**: Catches all OWASP Top 10 + memory leaks
+- **Comprehensive**: Catches all OWASP Top 10 + 50+ CWE patterns + memory leaks
 - **Structured**: Issue-based format with clear priorities
 - **Actionable**: Every issue includes fix with rationale
 
@@ -189,6 +193,12 @@ MIT
 5. Submit a pull request
 
 ## Version History
+
+- **v1.1** (2026-06-27): Enhanced security coverage
+  - Added comprehensive CWE mappings for all OWASP Top 10 categories
+  - Expanded to 50+ specific vulnerability patterns
+  - Added modern attack vectors (prototype pollution, JWT confusion, GraphQL attacks)
+  - Enhanced adversarial security review approach
 
 - **v1.0** (2026-06-11): Initial release
   - Multi-perspective issue-based reviews
