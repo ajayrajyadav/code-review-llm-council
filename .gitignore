@@ -1,0 +1,25 @@
+# Workspace files
+*-workspace/
+
+# Eval outputs
+evals/outputs/
+iteration-*/
+
+# Temporary files
+*.tmp
+temp.*
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

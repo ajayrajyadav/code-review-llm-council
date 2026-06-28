@@ -1,0 +1,142 @@
+{
+  "skill_name": "code-review-council",
+  "evals": [
+    {
+      "id": 0,
+      "name": "authentication-endpoint",
+      "prompt": "Review this authentication endpoint code. It's part of a user login system for a web application.\n\n```python\n# auth.py\nfrom flask import Flask, request, jsonify\nimport sqlite3\n\napp = Flask(__name__)\nDB_PATH = \"users.db\"\nSECRET_KEY = \"my-secret-key-123\"\n\n@app.route('/login', methods=['POST'])\ndef login():\n    username = request.form.get('username')\n    password = request.form.get('password')\n    \n    conn = sqlite3.connect(DB_PATH)\n    cursor = conn.cursor()\n    \n    query = f\"SELECT * FROM users WHERE username='{username}' AND password='{password}'\"\n    result = cursor.execute(query).fetchone()\n    \n    if result:\n        return jsonify({\"status\": \"success\", \"user_id\": result[0]})\n    else:\n        return jsonify({\"status\": \"failed\"}), 401\n\nif __name__ == '__main__':\n    app.run(debug=True)\n```",
+      "expected_output": "Should identify: SQL injection vulnerability, hardcoded secret, plaintext password comparison, missing input validation, debug mode in production, no rate limiting, missing test coverage",
+      "files": [],
+      "assertions": [
+        {
+          "name": "identifies_sql_injection",
+          "description": "Review identifies the SQL injection vulnerability in the string-formatted query",
+          "check": "Review mentions SQL injection or string interpolation vulnerability"
+        },
+        {
+          "name": "identifies_hardcoded_secret",
+          "description": "Review flags the hardcoded SECRET_KEY",
+          "check": "Review mentions hardcoded secret, credential, or API key"
+        },
+        {
+          "name": "identifies_plaintext_password",
+          "description": "Review notes that passwords are stored/compared in plaintext",
+          "check": "Review mentions password hashing, bcrypt, or plaintext password issue"
+        },
+        {
+          "name": "identifies_debug_mode",
+          "description": "Review flags debug=True as a production risk",
+          "check": "Review mentions debug mode being enabled or production safety"
+        },
+        {
+          "name": "multiple_reviewer_perspectives",
+          "description": "Review includes at least 3 different reviewer perspectives (Security, Performance, etc.)",
+          "check": "Review contains separate sections for at least 3 different council members"
+        },
+        {
+          "name": "prioritized_recommendations",
+          "description": "Review categorizes issues by priority (Blockers, High, Medium, Low)",
+          "check": "Review has a section with prioritized issues or final recommendation"
+        },
+        {
+          "name": "actionable_feedback",
+          "description": "Review provides specific, actionable recommendations (not just problem identification)",
+          "check": "Review includes specific suggestions for fixing issues, not just listing problems"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "user-list-endpoint",
+      "prompt": "Review this code for our user management API. We're expecting about 100k users initially, growing to 1M+ in the next year.\n\n```typescript\n// users.controller.ts\nimport { Request, Response } from 'express';\nimport { UserRepository } from './user.repository';\nimport { EmailService } from './email.service';\n\nexport class UsersController {\n  constructor(\n    private userRepo: UserRepository,\n    private emailService: EmailService\n  ) {}\n\n  async getUsers(req: Request, res: Response) {\n    const users = await this.userRepo.findAll();\n    \n    // Enrich with profile data\n    const enrichedUsers = [];\n    for (const user of users) {\n      const profile = await this.userRepo.findProfileById(user.id);\n      const lastLogin = await this.userRepo.findLastLogin(user.id);\n      const notifications = await this.userRepo.findNotifications(user.id);\n      \n      enrichedUsers.push({\n        ...user,\n        profile,\n        lastLogin,\n        unreadNotifications: notifications.filter(n => !n.read).length\n      });\n    }\n    \n    return res.json(enrichedUsers);\n  }\n\n  async createUser(req: Request, res: Response) {\n    const userData = req.body;\n    \n    const user = await this.userRepo.create(userData);\n    \n    // Send welcome email\n    await this.emailService.sendWelcomeEmail(user.email);\n    \n    return res.status(201).json(user);\n  }\n}\n```",
+      "expected_output": "Should identify: N+1 query problem in getUsers, no pagination, missing input validation on createUser, synchronous email sending blocks response, no error handling for email failure, missing transaction for user creation, no tests for error scenarios",
+      "files": [],
+      "assertions": [
+        {
+          "name": "identifies_n_plus_one",
+          "description": "Review identifies the N+1 query problem in the loop",
+          "check": "Review mentions N+1 queries, database query inefficiency, or multiple queries per user"
+        },
+        {
+          "name": "identifies_missing_pagination",
+          "description": "Review notes the lack of pagination for large datasets",
+          "check": "Review mentions pagination, limit/offset, or loading all users at once"
+        },
+        {
+          "name": "identifies_blocking_email",
+          "description": "Review flags synchronous email sending that blocks the response",
+          "check": "Review mentions async email, background jobs, or blocking email operations"
+        },
+        {
+          "name": "identifies_missing_validation",
+          "description": "Review notes missing input validation on createUser",
+          "check": "Review mentions input validation, schema validation, or validating request body"
+        },
+        {
+          "name": "performance_perspective",
+          "description": "Review includes specific performance analysis given the scale context (100k → 1M users)",
+          "check": "Review discusses scalability, performance at scale, or mentions the user growth context"
+        },
+        {
+          "name": "multiple_reviewer_perspectives",
+          "description": "Review includes at least 3 different reviewer perspectives",
+          "check": "Review contains separate sections for at least 3 different council members"
+        },
+        {
+          "name": "prioritized_recommendations",
+          "description": "Review categorizes issues by priority",
+          "check": "Review has a section with prioritized issues or final recommendation"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "payment-processing-design",
+      "prompt": "Review this architecture proposal for our new payment processing system.\n\n## Payment Processing Architecture\n\n### Overview\nWe're building a payment processing system to handle customer transactions. The system will process credit card payments, refunds, and subscription billing.\n\n### Proposed Architecture\n\n```\nAPI Gateway → Payment Service → Stripe API\n                    ↓\n              PostgreSQL DB\n```\n\n### Implementation Plan\n\n1. **Payment Service** (Node.js + Express)\n   - `/charge` endpoint: Accepts payment details, calls Stripe, saves to DB\n   - `/refund` endpoint: Processes refunds\n   - `/subscriptions` endpoint: Manages recurring billing\n\n2. **Database Schema**\n```sql\nCREATE TABLE payments (\n  id SERIAL PRIMARY KEY,\n  user_id INT,\n  amount DECIMAL(10,2),\n  stripe_token TEXT,\n  status VARCHAR(20),\n  created_at TIMESTAMP\n);\n```\n\n3. **Error Handling**\n- If Stripe call fails, return error to user\n- Log all errors to application logs\n\n4. **Timeline**\n- Week 1: Build payment endpoints\n- Week 2: Integrate Stripe\n- Week 3: Add subscription handling\n- Week 4: Testing and deployment\n\n### Security Considerations\n- Use HTTPS for all API calls\n- Validate user authentication before processing payments\n\n### Questions\n- Should we cache Stripe responses?\n- Do we need a separate microservice for subscriptions?",
+      "expected_output": "Should identify: No idempotency handling (duplicate charges), missing webhook handling for async Stripe events, no audit trail, storing sensitive Stripe tokens, lack of transaction atomicity, no retry mechanism, missing PCI compliance considerations, no monitoring/alerting, no rollback strategy, synchronous architecture won't scale, missing data retention/privacy policy, no discussion of failure scenarios (partial failures, network issues), missing load testing plan",
+      "files": [],
+      "assertions": [
+        {
+          "name": "identifies_idempotency",
+          "description": "Review identifies missing idempotency handling for payment operations",
+          "check": "Review mentions idempotency, duplicate charges, or retrying failed payments"
+        },
+        {
+          "name": "identifies_webhooks",
+          "description": "Review notes the need for Stripe webhook handling for async events",
+          "check": "Review mentions webhooks, async notifications, or event handling from Stripe"
+        },
+        {
+          "name": "identifies_audit_trail",
+          "description": "Review flags missing audit trail for financial transactions",
+          "check": "Review mentions audit log, transaction history, or compliance tracking"
+        },
+        {
+          "name": "identifies_pci_compliance",
+          "description": "Review discusses PCI compliance or storing sensitive payment data",
+          "check": "Review mentions PCI, compliance, or storing sensitive card/token data"
+        },
+        {
+          "name": "identifies_synchronous_bottleneck",
+          "description": "Review flags the synchronous architecture as a scalability issue",
+          "check": "Review mentions async processing, message queues, or synchronous API calls blocking"
+        },
+        {
+          "name": "architecture_perspective",
+          "description": "Review includes architectural analysis of the design",
+          "check": "Review has an Architecture section or discusses system design tradeoffs"
+        },
+        {
+          "name": "multiple_reviewer_perspectives",
+          "description": "Review includes at least 4 different reviewer perspectives for this complex design",
+          "check": "Review contains separate sections for at least 4 different council members"
+        },
+        {
+          "name": "prioritized_recommendations",
+          "description": "Review categorizes issues by priority with clear blockers",
+          "check": "Review has a section with prioritized issues, blockers, or final recommendation"
+        }
+      ]
+    }
+  ]
+}
